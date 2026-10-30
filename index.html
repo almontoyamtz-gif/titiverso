@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050915">
+<title>TITIVERSO HQ</title>
+<style>
+:root{
+  --bg:#050915;--panel:#0c1425;--line:#263650;
+  --text:#f4f5f8;--muted:#9aacc3;--accent:#e9826b;
+  --green:#83cbbd
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Inter,Arial,sans-serif
+}
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 24px;border-bottom:1px solid var(--line);
+  background:#070d1b
+}
+.logo{font-size:22px;font-weight:900;letter-spacing:2px}
+.logo span{color:var(--accent)}
+.tag{font-size:11px;color:var(--green)}
+main{max-width:1250px;margin:auto;padding:22px}
+h1{font-size:26px;margin:0 0 8px}
+p{color:var(--muted);line-height:1.5}
+.layout{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.panel{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:18px;padding:18px;min-width:0
+}
+.map{
+  background:radial-gradient(ellipse at center,#132239,#050915 72%);
+  border-radius:14px;overflow:hidden
+}
+svg{width:100%;display:block}
+.node{cursor:pointer}
+.node circle{transition:stroke-width .2s}
+.node:hover circle{stroke-width:4}
+.node text{pointer-events:none}
+button,input{
+  font:inherit;border-radius:10px;padding:10px 12px
+}
+button{
+  background:#244b48;color:white;border:1px solid #40736a;
+  cursor:pointer
+}
+button:hover{background:#32635b}
+input{
+  width:100%;background:#080f1d;color:white;
+  border:1px solid var(--line)
+}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.small{font-size:12px;color:var(--muted)}
+.project,.task{
+  padding:12px;border:1px solid var(--line);
+  border-radius:10px;margin:8px 0;background:#101b30
+}
+.task{display:flex;gap:9px;align-items:center}
+.task input{width:auto}
+.task.done span{text-decoration:line-through;color:var(--muted)}
+.pill{
+  display:inline-block;padding:5px 9px;border-radius:20px;
+  border:1px solid #385168;font-size:11px;color:#c8d7e8
+}
+h2{font-size:20px;margin:8px 0}
+h3{font-size:14px;margin:20px 0 10px;color:var(--green)}
+footer{text-align:center;padding:24px;color:var(--muted);font-size:12px}
+@media(max-width:760px){
+  header{padding:14px}
+  .logo{font-size:18px}
+  main{padding:12px}
+  h1{font-size:22px}
+  .layout{grid-template-columns:1fr}
+  .panel{padding:12px}
+  .map svg{min-height:300px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">TITI<span>VERSO</span> HQ</div>
+  <div class="tag">● MISSION CONTROL</div>
+</header>
+
+<main>
+  <h1>Tu universo de colaboradores</h1>
+  <p>Selecciona un planeta para explorar sus proyectos y tareas.</p>
+
+  <div class="layout">
+    <section class="panel">
+      <div class="actions">
+        <button onclick="selectAgent('hq')">◎ Vista general</button>
+        <button onclick="toggleLines()">↗ Conexiones</button>
+      </div>
+      <div class="map">
+        <svg id="universe" viewBox="0 0 640 500"
+          role="img" aria-label="Mapa de agentes TITIVERSO">
+          <g id="stars"></g>
+          <g id="connections"></g>
+          <g id="planets"></g>
+        </svg>
+      </div>
+      <p class="small">Los nodos representan roles de IA.
+        La automatización se incorporará posteriormente.</p>
+    </section>
+
+    <section class="panel">
+      <span class="pill" id="agentRole">Dirección general</span>
+      <h2 id="agentName">TITIVERSO</h2>
+      <p id="agentMission"></p>
+      <h3>PROYECTOS</h3>
+      <div id="projects"></div>
+      <div class="actions">
+        <input id="projectInput" placeholder="Nuevo proyecto">
+        <button onclick="addProject()">+ Agregar proyecto</button>
+      </div>
+      <h3>TAREAS</h3>
+      <div id="tasks"></div>
+      <div class="actions">
+        <input id="taskInput" placeholder="Nueva tarea">
+        <button onclick="addTask()">+ Agregar tarea</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="actions">
+    <button onclick="exportData()">↓ Exportar respaldo</button>
+    <button onclick="document.getElementById('importFile').click()">
+      ↑ Importar respaldo
+    </button>
+    <input id="importFile" type="file" accept=".json"
+      style="display:none" onchange="importData(event)">
+  </div>
+  <p class="small">Los datos se guardan en este navegador.
+    Todavía no se sincronizan entre dispositivos.</p>
+</main>
+<footer>TITIVERSO HQ · Un universo por descubrir</footer>
+
+<script>
+const agents=[
+ {id:"hq",name:"TITIVERSO",role:"Dirección general",
+  x:320,y:250,r:48,color:"#e9826b",symbol:"✦",
+  mission:"Dirigir la visión, estrategia y prioridades de TITIVERSO.",
+  projects:["Plan maestro","Calendario de lanzamiento"]},
+ {id:"creative",name:"Creatividad",role:"Director creativo IA",
+  x:135,y:90,r:31,color:"#e9826b",symbol:"✧",
+  mission:"Crear campañas, historias y personalidad de marca.",
+  projects:["Historia de Bahía Tití","Campaña de lanzamiento"]},
+ {id:"design",name:"Diseño",role:"Diseñador IA",
+  x:320,y:66,r:31,color:"#c9b3e9",symbol:"◈",
+  mission:"Desarrollar la identidad visual y proteger el diseño de Titi.",
+  projects:["Mascota Titi 3D","Manual de identidad"]},
+ {id:"product",name:"Producto",role:"Especialista de producto IA",
+  x:500,y:105,r:31,color:"#e6bd82",symbol:"◇",
+  mission:"Diseñar colecciones, materiales y fichas técnicas.",
+  projects:["Primera colección","Telas y acabados"]},
+ {id:"marketing",name:"Marketing",role:"Estratega digital IA",
+  x:555,y:260,r:31,color:"#8cb5e8",symbol:"✳",
+  mission:"Crear contenidos, campañas y estrategias de crecimiento.",
+  projects:["Instagram y TikTok","Teaser de Titi"]},
+ {id:"commercial",name:"Comercial",role:"Director comercial IA",
+  x:465,y:415,r:31,color:"#a9d9c0",symbol:"◆",
+  mission:"Definir precios, canales y estrategias de ventas.",
+  projects:["E-commerce","Estrategia comercial"]},
+ {id:"finance",name:"Finanzas",role:"Analista financiero IA",
+  x:285,y:430,r:31,color:"#edc98e",symbol:"$",
+  mission:"Evaluar costos, inversión, márgenes y flujo de caja.",
+  projects:["Presupuesto inicial","Flujo de caja"]},
+ {id:"ops",name:"Operaciones",role:"Gestor operativo IA",
+  x:100,y:370,r:31,color:"#84c7d4",symbol:"⚙",
+  mission:"Coordinar proveedores, inventarios y producción.",
+  projects:["Proveedores","Producción y logística"]},
+ {id:"legal",name:"Legal",role:"Asesor legal IA",
+  x:75,y:230,r:31,color:"#b5b7dd",symbol:"§",
+  mission:"Organizar contratos, registro de marca y cumplimiento.",
+  projects:["Registro de marca","Contratos"]}
+];
+
+const edges=[
+ ["hq","creative"],["hq","design"],["hq","product"],
+ ["hq","marketing"],["hq","commercial"],["hq","finance"],
+ ["hq","ops"],["hq","legal"],["creative","design"],
+ ["creative","marketing"],["design","product"],
+ ["product","ops"],["product","finance"],
+ ["marketing","commercial"],["commercial","finance"],
+ ["finance","ops"],["ops","legal"]
+];
+
+const NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+const key="titiverso-hq-v1";
+let selected="hq",showLines=true;
+let data={projects:{},tasks:{}};
+
+try{
+ const saved=JSON.parse(localStorage.getItem(key));
+ if(saved&&typeof saved==="object"){
+  data.projects=saved.projects||{};
+  data.tasks=saved.tasks||{};
+ }
+}catch(e){}
+
+agents.forEach(a=>{
+ if(!Array.isArray(data.projects[a.id]))
+  data.projects[a.id]=[...a.projects];
+ if(!Array.isArray(data.tasks[a.id]))
+  data.tasks[a.id]=[];
+});
+
+function save(){
+ try{localStorage.setItem(key,JSON.stringify(data))}
+ catch(e){console.warn("No se pudo guardar",e)}
+}
+
+function el(tag,attrs,parent){
+ const node=document.createElementNS(NS,tag);
+ Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v));
+ parent.appendChild(node);
+ return node;
+}
+
+function draw(){
+ $("stars").replaceChildren();
+ $("connections").replaceChildren();
+ $("planets").replaceChildren();
+
+ for(let i=0;i<95;i++){
+  el("circle",{
+   cx:(i*137+31)%640,cy:(i*89+19)%500,
+   r:i%8===0?1.5:.7,fill:"#d1e2f5",
+   opacity:i%4===0?.6:.23
+  },$("stars"));
+ }
+
+ if(showLines){
+  edges.forEach(([from,to])=>{
+   const a=agents.find(n=>n.id===from);
+   const b=agents.find(n=>n.id===to);
+   const active=selected===from||selected===to;
+   el("line",{
+    x1:a.x,y1:a.y,x2:b.x,y2:b.y,
+    stroke:active?"#83cbbd":"#476079",
+    "stroke-width":active?2:1,
+    "stroke-dasharray":active?"":"5 6",
+    opacity:active?.85:.38
+   },$("connections"));
+  });
+ }
+
+ agents.forEach(a=>{
+  const g=el("g",{
+   class:"node",role:"button",tabindex:"0",
+   "aria-label":"Abrir "+a.name
+  },$("planets"));
+  if(a.id===selected){
+   el("circle",{
+    cx:a.x,cy:a.y,r:a.r+9,fill:"none",
+    stroke:a.color,"stroke-width":9,opacity:.18
+   },g);
+  }
+  el("circle",{
+   cx:a.x,cy:a.y,r:a.r,
+   fill:a.id==="hq"?"#254743":"#142338",
+   stroke:a.color,
+   "stroke-width":a.id===selected?3:1.6
+  },g);
+  const symbol=el("text",{
+   x:a.x,y:a.y+7,"text-anchor":"middle",
+   fill:a.color,"font-size":a.id==="hq"?27:22,
+   "font-weight":"bold"
+  },g);
+  symbol.textContent=a.symbol;
+
+  const name=el("text",{
+   x:a.x,y:a.y+a.r+18,
+   "text-anchor":"middle",fill:"#f4f5f8",
+   "font-size":a.id==="hq"?14:12
+  },g);
+  name.textContent=a.name;
+
+  g.addEventListener("click",()=>selectAgent(a.id));
+  g.addEventListener("keydown",e=>{
+   if(e.key==="Enter"||e.key===" "){
+    e.preventDefault();selectAgent(a.id);
+   }
+  });
+ });
+}
+
+function selectAgent(id){
+ selected=id;
+ const a=agents.find(x=>x.id===id);
+ $("agentRole").textContent=a.role;
+ $("agentName").textContent=a.name;
+ $("agentMission").textContent=a.mission;
+ renderProjects();
+ renderTasks();
+ draw();
+}
+
+function renderProjects(){
+ $("projects").replaceChildren();
+ data.projects[selected].forEach((name,index)=>{
+  const div=document.createElement("div");
+  div.className="project";
+  const label=document.createElement("span");
+  label.textContent=name;
+  div.appendChild(label);
+  $("projects").appendChild(div);
+ });
+}
+
+function renderTasks(){
+ $("tasks").replaceChildren();
+ data.tasks[selected].forEach((task,index)=>{
+  const div=document.createElement("div");
+  div.className="task"+(task.done?" done":"");
+  const checkbox=document.createElement("input");
+  checkbox.type="checkbox";
+  checkbox.checked=!!task.done;
+  checkbox.addEventListener("change",()=>{
+   task.done=checkbox.checked;save();renderTasks();
+  });
+  const label=document.createElement("span");
+  label.textContent=task.text;
+  div.append(checkbox,label);
+  $("tasks").appendChild(div);
+ });
+}
+
+function addProject(){
+ const value=$("projectInput").value.trim();
+ if(!value)return;
+ data.projects[selected].push(value);
+ $("projectInput").value="";
+ save();renderProjects();
+}
+
+function addTask(){
+ const value=$("taskInput").value.trim();
+ if(!value)return;
+ data.tasks[selected].push({text:value,done:false});
+ $("taskInput").value="";
+ save();renderTasks();
+}
+
+function toggleLines(){
+ showLines=!showLines;draw();
+}
+
+function exportData(){
+ const blob=new Blob([JSON.stringify(data,null,2)],
+  {type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download="titiverso-hq-respaldo.json";
+ a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function importData(event){
+ const file=event.target.files[0];
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const incoming=JSON.parse(reader.result);
+   if(!incoming||typeof incoming!=="object"||
+      typeof incoming.projects!=="object"||
+      typeof incoming.tasks!=="object"||
+      !incoming.projects||!incoming.tasks)
+    throw Error("Formato inválido");
+   for(const a of agents){
+    if(!Array.isArray(incoming.projects[a.id])||
+       !Array.isArray(incoming.tasks[a.id]))
+     throw Error("Faltan datos de "+a.name);
+    if(!incoming.projects[a.id].every(x=>typeof x==="string")||
+       !incoming.tasks[a.id].every(x=>x&&
+        typeof x.text==="string"&&
+        typeof x.done==="boolean"))
+     throw Error("Datos de tarea inválidos");
+   }
+   data=incoming;
+   save();selectAgent(selected);
+   alert("Respaldo importado correctamente");
+  }catch(e){alert("No se pudo importar: "+e.message)}
+  event.target.value="";
+ };
+ reader.readAsText(file);
+}
+
+save();
+selectAgent("hq");
+</script>
+</body>
+</html>
