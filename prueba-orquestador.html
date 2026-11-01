@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TITIVERSO HQ 3.0 - Prueba</title>
+</head>
+<body style="font-family:Arial;background:#101b35;color:white;padding:25px">
+  <h2>🐒 TITIVERSO HQ 3.0</h2>
+  <h3>Prueba del agente orquestador</h3>
+
+  <p>Objetivo empresarial:</p>
+  <textarea id="objetivo" rows="4" style="width:100%;max-width:500px">Quiero lanzar una marca de ropa con un presupuesto de 30 millones y una estrategia de marketing.</textarea>
+
+  <p><button id="ejecutar">Crear plan de trabajo</button></p>
+  <pre id="resultado" style="white-space:pre-wrap"></pre>
+
+  <script type="module">
+    import { crearPlan } from "./agents/orchestrator.js";
+
+    document.getElementById("ejecutar").onclick = () => {
+      try {
+        const objetivo = document.getElementById("objetivo").value;
+        const plan = crearPlan(objetivo, "proyecto-demostracion");
+
+        document.getElementById("resultado").textContent =
+          JSON.stringify(plan, null, 2);
+      } catch (error) {
+        document.getElementById("resultado").textContent = error.message;
+      }
+    };
+  </script>
+</body>
+</html>
